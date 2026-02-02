@@ -1,31 +1,13 @@
-name: AHMAD RDX API CI
-
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
+name: AHMAD RDX API Check
+on: [push]
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-
     steps:
-    - name: 📥 Checkout Code
-      uses: actions/checkout@v3
-
-    - name: 🟢 Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18
-        cache: 'npm'
-
-    - name: 📦 Install Dependencies
-      run: npm install
-
-    - name: 🕵️ Syntax Check
-      run: node --check index.js
-
-    - name: 🚀 Verify Build
-      run: echo "Build logic verified for 𝐀𝐇𝐌𝐀𝐃 𝐑𝐃𝐗 𝐀𝐏𝐈"
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm install
+      - run: node --check index.js
       
