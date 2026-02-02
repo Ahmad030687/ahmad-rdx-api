@@ -6,54 +6,53 @@ puppeteer.use(StealthPlugin());
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-app.get('/', (req, res) => res.send('🦅 𝐀𝐇𝐌𝐀𝐃 𝐑𝐃𝐗 𝐀𝐏𝐈 - Smart Engine is Live!'));
+app.get('/', (req, res) => res.send('🦅 𝐀𝐇𝐌𝐀𝐃 𝐑𝐃𝐗 𝐀𝐏𝐈 - Mobile Bypass Active!'));
 
 app.get('/ahmad-dl', async (req, res) => {
-    const videoUrl = req.query.url;
+    let videoUrl = req.query.url;
     if (!videoUrl) return res.json({ status: false, msg: "Link missing!" });
+
+    // 🚀 STEP 1: Desktop Link ko Mobile Link mein badlo
+    if (videoUrl.includes("www.facebook.com")) {
+        videoUrl = videoUrl.replace("www.facebook.com", "m.facebook.com");
+    } else if (videoUrl.includes("facebook.com") && !videoUrl.includes("m.facebook.com")) {
+        videoUrl = videoUrl.replace("facebook.com", "m.facebook.com");
+    }
 
     let browser;
     try {
         browser = await puppeteer.launch({
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process', '--no-zygote'],
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process'],
             headless: "new",
             executablePath: '/usr/bin/google-chrome-stable'
         });
 
         const page = await browser.newPage();
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
         
-        // 1. Page load karo
-        await page.goto(videoUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        // 🚀 STEP 2: Mobile Agent use karo taake FB ko lage iPhone hai
+        await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1');
+        
+        await page.goto(videoUrl, { waitUntil: 'networkidle2', timeout: 60000 });
 
-        // 2. SMART WAIT: Jab tak video tag nazar na aaye, 10 second tak intezar karo
-        try {
-            await page.waitForSelector('video', { timeout: 15000 });
-        } catch (e) {
-            console.log("Video selector timeout");
-        }
+        // 🚀 STEP 3: SMART DETECTION (Wait for 5 seconds for video to render)
+        await new Promise(r => setTimeout(r, 5000));
 
-        // 3. 2-second ka extra sabr (Buffering ke liye)
-        await new Promise(r => setTimeout(r, 2000));
-
-        // 4. Link Extract karne ki Advanced Logic
         const finalUrl = await page.evaluate(() => {
-            const getSrc = (el) => {
-                if (!el) return null;
-                return el.src && !el.src.startsWith('blob:') ? el.src : null;
-            };
-
-            // Pehle video tag check karo
+            // Mobile version mein video tags dhoondna asan hai
             const video = document.querySelector('video');
-            let src = getSrc(video);
-            
-            // Agar nahi mila to source tag check karo
-            if (!src) {
-                const source = document.querySelector('video source');
-                src = getSrc(source);
+            if (video && video.src && !video.src.startsWith('blob:')) return video.src;
+
+            // Agar reel hai to aksar meta tags mein asli link hota hai
+            const metaOgVideo = document.querySelector('meta[property="og:video"]');
+            if (metaOgVideo) return metaOgVideo.content;
+
+            // Last resort: search all video sources
+            const sources = Array.from(document.querySelectorAll('video source, a[href*=".mp4"]'));
+            for (let s of sources) {
+                let link = s.src || s.href;
+                if (link && !link.startsWith('blob:')) return link;
             }
-            
-            return src;
+            return null;
         });
 
         await browser.close();
@@ -61,7 +60,7 @@ app.get('/ahmad-dl', async (req, res) => {
         if (finalUrl) {
             res.json({ status: true, brand: "𝐀𝐇𝐌𝐀𝐃 𝐑𝐃𝐗", url: finalUrl });
         } else {
-            res.json({ status: false, msg: "Video link detect nahi ho saka. Link shayad private hai ya expired." });
+            res.json({ status: false, msg: "Facebook ne link block kar diya hai. Shayad Proxy ki zaroorat hai." });
         }
 
     } catch (e) {
