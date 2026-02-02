@@ -7,8 +7,9 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 
-# Environment variable for Render
-ENV PORT=3000
+# Render ke free tier ke liye memory optimization
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
-EXPOSE 3000
+# Port Render khud manage karega
 CMD ["npm", "start"]
