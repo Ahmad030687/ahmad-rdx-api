@@ -4,9 +4,10 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin());
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+// Render hamesha PORT environment variable deta hai, hum wahi use karenge
+const PORT = process.env.PORT || 10000; 
 
-app.get('/', (req, res) => res.send('🦅 𝐀𝐇𝐌𝐀𝐃 𝐑𝐃𝐗 𝐀𝐏𝐈 - Render Engine is Live!'));
+app.get('/', (req, res) => res.send('🦅 𝐀𝐇𝐌𝐀𝐃 𝐑𝐃𝐗 𝐀𝐏𝐈 - Active & Live!'));
 
 app.get('/ahmad-dl', async (req, res) => {
     const videoUrl = req.query.url;
@@ -15,15 +16,21 @@ app.get('/ahmad-dl', async (req, res) => {
     let browser;
     try {
         browser = await puppeteer.launch({
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-            headless: "new",
-            executablePath: '/usr/bin/google-chrome-stable' // Render Docker path
+            args: [
+                '--no-sandbox', 
+                '--disable-setuid-sandbox', 
+                '--disable-dev-shm-usage',
+                '--single-process', // Memory bachane ke liye
+                '--no-zygote'
+            ],
+            headless: "new"
         });
 
         const page = await browser.newPage();
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
         
-        await page.goto(videoUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+        // Timeout 2 minute kar diya hai heavy videos ke liye
+        await page.goto(videoUrl, { waitUntil: 'networkidle2', timeout: 120000 });
 
         const finalUrl = await page.evaluate(() => {
             return document.querySelector('video')?.src;
@@ -38,4 +45,5 @@ app.get('/ahmad-dl', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`Server started on ${PORT}`));
+// 0.0.0.0 par listen karna Render ke liye zaroori hai
+app.listen(PORT, '0.0.0.0', () => console.log(`RDX API live on port ${PORT}`));
