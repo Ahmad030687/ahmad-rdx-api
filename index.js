@@ -6,7 +6,7 @@ puppeteer.use(StealthPlugin());
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-app.get('/', (req, res) => res.send('🦅 𝐀𝐇𝐌𝐀𝐃 𝐑𝐃𝐗 𝐀𝐏𝐈 - Universal Engine (FB/IG/TT) is Live!'));
+app.get('/', (req, res) => res.send('🦅 𝐀𝐇𝐌𝐀𝐃 𝐑𝐃𝐗 𝐀𝐏𝐈 - Pro Engine (FB/IG/TT) is Live!'));
 
 app.get('/ahmad-dl', async (req, res) => {
     let videoUrl = req.query.url;
@@ -22,45 +22,52 @@ app.get('/ahmad-dl', async (req, res) => {
 
         const page = await browser.newPage();
         
-        // --- 🚀 PLATFORM DETECTION & LOGIC ---
-        
-        // 1. FACEBOOK BYPASS
+        // --- 🛡️ ENGINE CONFIGURATION ---
         if (videoUrl.includes("facebook.com") || videoUrl.includes("fb.watch")) {
             videoUrl = videoUrl.replace("www.facebook.com", "m.facebook.com");
             await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1');
         } 
-        
-        // 2. INSTAGRAM BYPASS
         else if (videoUrl.includes("instagram.com")) {
-            await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1');
+            // Instagram needs a very specific Mobile Safari header to avoid login wall
+            await page.setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1');
         } 
-        
-        // 3. TIKTOK BYPASS
         else if (videoUrl.includes("tiktok.com")) {
-            // TikTok mobile version is very bot-friendly
             await page.setUserAgent('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.101 Mobile Safari/537.36');
         }
 
-        await page.goto(videoUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+        // Navigate to URL
+        await page.goto(videoUrl, { waitUntil: 'networkidle2', timeout: 80000 });
 
-        // Smart Wait: Har platform ko load hone ke liye 4-5 second chahiye
-        await new Promise(r => setTimeout(r, 5000));
+        // Platform-specific wait times
+        const waitTime = videoUrl.includes("instagram.com") ? 7000 : 5000;
+        await new Promise(r => setTimeout(r, waitTime));
 
         const finalUrl = await page.evaluate(() => {
+            // Helper function to extract URL
+            const getSrc = (el) => (el && el.src && !el.src.startsWith('blob:')) ? el.src : null;
+
+            // 1. General Video Tag Search
             const video = document.querySelector('video');
-            if (video && video.src && !video.src.startsWith('blob:')) return video.src;
+            let src = getSrc(video);
 
-            // Meta Tag Check (Backup for IG/FB Reels)
-            const metaVideo = document.querySelector('meta[property="og:video"]');
-            if (metaVideo) return metaVideo.content;
-
-            // TikTok specific: checking for download/play links
-            const sources = Array.from(document.querySelectorAll('video source, a[href*=".mp4"]'));
-            for (let s of sources) {
-                let link = s.src || s.href;
-                if (link && !link.startsWith('blob:')) return link;
+            // 2. Instagram/Facebook Meta Tag Check (Very effective for Reels)
+            if (!src) {
+                const metaOgVideo = document.querySelector('meta[property="og:video"]');
+                if (metaOgVideo) src = metaOgVideo.content;
             }
-            return null;
+
+            // 3. TikTok / Deep Source Search
+            if (!src) {
+                const allSources = Array.from(document.querySelectorAll('video source, video, a[href*=".mp4"]'));
+                for (let s of allSources) {
+                    let link = s.src || s.href;
+                    if (link && !link.startsWith('blob:')) {
+                        src = link;
+                        break;
+                    }
+                }
+            }
+            return src;
         });
 
         await browser.close();
@@ -69,11 +76,11 @@ app.get('/ahmad-dl', async (req, res) => {
             res.json({ 
                 status: true, 
                 brand: "𝐀𝐇𝐌𝐀𝐃 𝐑𝐃𝐗", 
-                platform: videoUrl.includes("fb") ? "FB" : videoUrl.includes("ig") ? "IG" : "TT",
+                platform: videoUrl.includes("fb") ? "Facebook" : videoUrl.includes("ig") ? "Instagram" : "TikTok",
                 url: finalUrl 
             });
         } else {
-            res.json({ status: false, msg: "Link detect nahi ho saka." });
+            res.json({ status: false, msg: "Video detect nahi ho saka. Shayad private account ho?" });
         }
 
     } catch (e) {
@@ -82,4 +89,4 @@ app.get('/ahmad-dl', async (req, res) => {
     }
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log(`Universal RDX API Live on ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`Pro RDX API Live on ${PORT}`));
