@@ -42,15 +42,25 @@ def download_info():
 @app.route('/proxy-dl')
 def proxy_dl():
     target_url = request.args.get('url')
+    if not target_url:
+        return jsonify({"status": False, "msg": "Missing video url"})
+
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Referer': 'https://www.tiktok.com/'
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile Safari/604.1",
+        "Referer": "https://www.tiktok.com/",
+        "Accept": "*/*",
+        "Accept-Encoding": "identity",
+        "Connection": "keep-alive"
     }
+
     def generate():
         with requests.get(target_url, headers=headers, stream=True) as r:
-            for chunk in r.iter_content(chunk_size=1024*1024):
-                yield chunk
-    return Response(generate(), content_type='video/mp4')
+            r.raise_for_status()
+            for chunk in r.iter_content(chunk_size=1024 * 512):
+                if chunk:
+                    yield chunk
+
+    return Response(generate(), content_type="video/mp4")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
