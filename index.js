@@ -1,45 +1,54 @@
-const express = require("express");
-const axios = require("axios");
+const express = require('express');
+const axios = require('axios');
+const cheerio = require('cheerio');
+const qs = require('qs');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-app.get("/", (req, res) => {
-  res.send("🦅 AHMAD RDX API – FB/IG Downloader LIVE");
+app.get('/', (req, res) => res.send('🦅 𝐀𝐇𝐌𝐀𝐃 𝐑𝐃𝐗 - Unlimited Universal DL is Live!'));
+
+// 🎥 UNIVERSAL DOWNLOADER ENDPOINT
+app.get('/rdx-dl', async (req, res) => {
+    const url = req.query.url;
+    if (!url) return res.json({ status: false, msg: "Link bhej Ahmad bhai!" });
+
+    try {
+        let result = null;
+
+        // 1. TIKTOK LOGIC (No Watermark)
+        if (url.includes("tiktok.com")) {
+            const data = qs.stringify({ 'id': url, 'locale': 'en', 'tt': 'RFZueFoz' });
+            const response = await axios.post('https://ssstik.io/abc?url=dl', data);
+            const $ = cheerio.load(response.data);
+            result = $('.download_link').first().attr('href');
+        }
+
+        // 2. INSTAGRAM LOGIC
+        else if (url.includes("instagram.com")) {
+            const data = qs.stringify({ 'q': url, 't': 'media', 'lang': 'en' });
+            const response = await axios.post('https://v3.saveig.app/api/ajaxSearch', data);
+            const $ = cheerio.load(response.data.data);
+            result = $('.download-items__btn a').attr('href');
+        }
+
+        // 3. FACEBOOK LOGIC
+        else if (url.includes("facebook.com") || url.includes("fb.watch")) {
+            const data = qs.stringify({ 'q': url });
+            const response = await axios.post('https://getmyfb.com/process', data);
+            const $ = cheerio.load(response.data);
+            result = $('.results-item-bundle a').first().attr('href');
+        }
+
+        if (result) {
+            res.json({ status: true, brand: "𝐒𝐀𝐑𝐃𝐀𝐑 𝐑𝐃𝐗", url: result });
+        } else {
+            res.json({ status: false, msg: "Video link nahi mil saka. Link public hai?" });
+        }
+
+    } catch (e) {
+        res.json({ status: false, error: "Server Busy ya Link Expired!" });
+    }
 });
 
-app.get("/dl", async (req, res) => {
-  let url = req.query.url;
-  if (!url) return res.json({ status: false });
-
-  // Force mobile
-  url = url.replace("www.facebook.com", "m.facebook.com");
-
-  try {
-    const html = await axios.get(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
-        "Accept-Language": "en-US,en;q=0.9"
-      }
-    });
-
-    const match = html.data.match(/"browser_native_sd_url":"([^"]+)"/)
-      || html.data.match(/"browser_native_hd_url":"([^"]+)"/);
-
-    if (!match) return res.json({ status: false });
-
-    const video = match[1].replace(/\\u0025/g, "%").replace(/\\/g, "");
-
-    res.json({
-      status: true,
-      brand: "𝐀𝐇𝐌𝐀𝐃 𝐑𝐃𝐗",
-      url: video
-    });
-
-  } catch {
-    res.json({ status: false });
-  }
-});
-
-app.listen(PORT, "0.0.0.0");
+app.listen(PORT, '0.0.0.0', () => console.log(`RDX Universal API on ${PORT}`));
