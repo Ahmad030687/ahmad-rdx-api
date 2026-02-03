@@ -2,44 +2,44 @@ from flask import Flask, request, jsonify, Response
 import yt_dlp
 import requests
 import os
-from urllib.parse import quote, unquote  # 🛡️ Ye library link ko tootne se bachayegi
+import base64 # 🛡️ Ye hai wo tool jo link ko tootne se bachayega
 
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "🦅 AHMAD RDX FINAL ENGINE - LIVE"
+    return "🦅 AHMAD RDX ENGINE - BASE64 MODE"
 
 @app.route('/ahmad-dl')
 def get_info():
     url = request.args.get('url')
     if not url: return jsonify({"status": False, "msg": "Link missing"})
     
-    # 📱 iPhone User-Agent (TikTok isey kabhi block nahi karta)
     ydl_opts = {
         'format': 'best',
         'quiet': True,
         'no_warnings': True,
-        'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile Safari/604.1'
+        # iPhone User-Agent taake TikTok ko lage mobile hai
+        'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile Safari/604.1'
     }
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            real_video_url = info.get('url')
+            real_url = info.get('url')
             
-            # 🛡️ MAIN FIX: Link ko 'Lock' (Encode) kar rahe hain taake wo toote nahi
-            # Pehle ye 'https://tiktok.com?a=1&b=2' tha (jo toot jata tha)
-            # Ab ye 'https%3A%2F%2Ftiktok.com%3Fa%3D1%26b%3D2' ban jayega (Safe)
-            safe_url = quote(real_video_url)
+            # 🛡️ STEP 1: Link ko Base64 mein convert karna (Taake toote nahi)
+            url_bytes = real_url.encode('ascii')
+            base64_bytes = base64.b64encode(url_bytes)
+            base64_url = base64_bytes.decode('ascii')
             
-            # Ab hum bot ko wo link denge jo hamare proxy se guzre ga
-            proxy_link = f"{request.host_url}proxy-dl?url={safe_url}"
+            # Ab hum ye safe Base64 string bhejenge
+            proxy_link = f"{request.host_url}proxy-dl?token={base64_url}"
             
             return jsonify({
                 "status": True,
                 "title": info.get('title', 'Social Video'),
-                "url": proxy_link,  # Bot ko ye wala link milega
+                "url": proxy_link,
                 "is_proxy": True
             })
 
@@ -48,30 +48,31 @@ def get_info():
 
 @app.route('/proxy-dl')
 def proxy_dl():
-    # Jab Bot wapis aayega, hum link ko wapis 'Unlock' (Decode) nahi karenge
-    # Kyunke Flask automatically decode kar deta hai request.args mein.
-    target_url = request.args.get('url')
-    
-    if not target_url: 
-        return Response("No URL provided", status=400)
+    token = request.args.get('token')
+    if not token: return Response("Error: No token", status=400)
 
-    # Headers taake TikTok ko lage ke iPhone se request aa rahi hai
-    headers = {
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile Safari/604.1",
-        "Referer": "https://www.tiktok.com/"
-    }
-    
-    def generate():
-        try:
-            # Stream=True zaroori hai bari videos ke liye
-            with requests.get(target_url, headers=headers, stream=True, timeout=60) as r:
-                r.raise_for_status() # Agar 403/404 aaya to yahan error pakra jayega
-                for chunk in r.iter_content(chunk_size=1024 * 1024): # 1MB Chunks
+    try:
+        # 🛡️ STEP 2: Wapis Original URL nikalna
+        base64_bytes = token.encode('ascii')
+        message_bytes = base64.b64decode(base64_bytes)
+        target_url = message_bytes.decode('ascii')
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile Safari/604.1",
+            "Referer": "https://www.tiktok.com/"
+        }
+
+        def generate():
+            # 120s Timeout taake bari video bhi download ho jaye
+            with requests.get(target_url, headers=headers, stream=True, timeout=120) as r:
+                r.raise_for_status()
+                for chunk in r.iter_content(chunk_size=1024 * 1024): # 1MB chunks
                     yield chunk
-        except Exception as e:
-            print(f"Proxy Error: {e}")
 
-    return Response(generate(), content_type="video/mp4")
+        return Response(generate(), content_type="video/mp4")
+
+    except Exception as e:
+        return Response(f"Proxy Error: {str(e)}", status=500)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
