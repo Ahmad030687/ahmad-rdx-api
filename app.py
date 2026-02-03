@@ -24,13 +24,12 @@ def get_info():
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            # Proxy URL generation
+            # Proxy URL for direct streaming
             proxy_url = f"{request.host_url}proxy-dl?url={info.get('url')}"
             return jsonify({
                 "status": True,
                 "title": info.get('title', 'Social Video'),
-                "url": proxy_url,
-                "headers": info.get('http_headers', {})
+                "url": proxy_url
             })
     except Exception as e:
         return jsonify({"status": False, "error": str(e)})
@@ -43,9 +42,13 @@ def proxy():
         'Referer': 'https://www.tiktok.com/'
     }
     def generate():
-        with requests.get(target_url, headers=headers, stream=True, timeout=120) as r:
-            for chunk in r.iter_content(chunk_size=1024*1024):
-                yield chunk
+        try:
+            with requests.get(target_url, headers=headers, stream=True, timeout=120) as r:
+                for chunk in r.iter_content(chunk_size=1024*1024):
+                    yield chunk
+        except Exception as e:
+            print(f"Proxy Error: {e}")
+
     return Response(generate(), content_type='video/mp4')
 
 if __name__ == "__main__":
