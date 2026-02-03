@@ -5,30 +5,23 @@ import os
 
 app = Flask(__name__)
 
-@app.route('/')
-def home():
-    return "🦅 AHMAD RDX ENGINE - Live"
-
 @app.route('/ahmad-dl')
-def download_info():
+def get_info():
     url = request.args.get('url')
-    if not url: return jsonify({"status": False, "msg": "Link missing!"})
+    if not url: return jsonify({"status": False, "msg": "Link missing"})
     
     ydl_opts = {
         'format': 'best',
         'quiet': True,
         'no_warnings': True,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
+        'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15'
     }
-    
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            original_url = info.get('url')
-            
-            # TikTok ke liye proxy zaroori hai, FB/IG ke liye direct bhi chal sakta hai
             is_tiktok = "tiktok" in url.lower()
-            final_url = f"{request.host_url}proxy-dl?url={original_url}" if is_tiktok else original_url
+            # TikTok ke liye proxy link, baqi ke liye direct
+            final_url = f"{request.host_url}proxy-dl?url={info.get('url')}" if is_tiktok else info.get('url')
             
             return jsonify({
                 "status": True,
@@ -42,24 +35,14 @@ def download_info():
 @app.route('/proxy-dl')
 def proxy_dl():
     target_url = request.args.get('url')
-    if not target_url:
-        return jsonify({"status": False, "msg": "Missing video url"})
-
     headers = {
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile Safari/604.1",
-        "Referer": "https://www.tiktok.com/",
-        "Accept": "*/*",
-        "Accept-Encoding": "identity",
-        "Connection": "keep-alive"
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15",
+        "Referer": "https://www.tiktok.com/"
     }
-
     def generate():
-        with requests.get(target_url, headers=headers, stream=True) as r:
-            r.raise_for_status()
+        with requests.get(target_url, headers=headers, stream=True, timeout=120) as r:
             for chunk in r.iter_content(chunk_size=1024 * 512):
-                if chunk:
-                    yield chunk
-
+                yield chunk
     return Response(generate(), content_type="video/mp4")
 
 if __name__ == "__main__":
