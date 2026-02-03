@@ -4,51 +4,38 @@ const cheerio = require('cheerio');
 const qs = require('qs');
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 10000; // Render isi port ka intezar karta hai
 
-app.get('/', (req, res) => res.send('🦅 𝐀𝐇𝐌𝐀𝐃 𝐑𝐃𝐗 - Unlimited Universal DL is Live!'));
+app.get('/', (req, res) => res.send('🦅 𝐀𝐇𝐌𝐀𝐃 𝐑𝐃𝐗 𝐔𝐋𝐓𝐑𝐀-𝐋𝐈𝐓𝐄 - Ready to Fly!'));
 
-// 🎥 UNIVERSAL DOWNLOADER ENDPOINT
 app.get('/rdx-dl', async (req, res) => {
     const url = req.query.url;
-    if (!url) return res.json({ status: false, msg: "Link bhej Ahmad bhai!" });
+    if (!url) return res.json({ status: false, msg: "Link missing!" });
 
     try {
-        let result = null;
+        let videoUrl = null;
 
-        // 1. TIKTOK LOGIC (No Watermark)
-        if (url.includes("tiktok.com")) {
-            const data = qs.stringify({ 'id': url, 'locale': 'en', 'tt': 'RFZueFoz' });
-            const response = await axios.post('https://ssstik.io/abc?url=dl', data);
-            const $ = cheerio.load(response.data);
-            result = $('.download_link').first().attr('href');
-        }
+        // 🟢 Facebook/Instagram/TikTok Bypass Logic
+        const data = qs.stringify({ 'q': url, 'lang': 'en' });
+        const config = {
+            method: 'post',
+            url: 'https://v3.saveig.app/api/ajaxSearch', // Multi-downloader endpoint
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            data: data
+        };
 
-        // 2. INSTAGRAM LOGIC
-        else if (url.includes("instagram.com")) {
-            const data = qs.stringify({ 'q': url, 't': 'media', 'lang': 'en' });
-            const response = await axios.post('https://v3.saveig.app/api/ajaxSearch', data);
-            const $ = cheerio.load(response.data.data);
-            result = $('.download-items__btn a').attr('href');
-        }
+        const response = await axios(config);
+        const $ = cheerio.load(response.data.data);
+        videoUrl = $('.download-items__btn a').attr('href');
 
-        // 3. FACEBOOK LOGIC
-        else if (url.includes("facebook.com") || url.includes("fb.watch")) {
-            const data = qs.stringify({ 'q': url });
-            const response = await axios.post('https://getmyfb.com/process', data);
-            const $ = cheerio.load(response.data);
-            result = $('.results-item-bundle a').first().attr('href');
-        }
-
-        if (result) {
-            res.json({ status: true, brand: "𝐒𝐀𝐑𝐃𝐀𝐑 𝐑𝐃𝐗", url: result });
+        if (videoUrl) {
+            res.json({ status: true, brand: "𝐒𝐀𝐑𝐃𝐀𝐑 𝐑𝐃𝐗", url: videoUrl });
         } else {
-            res.json({ status: false, msg: "Video link nahi mil saka. Link public hai?" });
+            res.json({ status: false, msg: "Video link not found. Try another link!" });
         }
-
     } catch (e) {
-        res.json({ status: false, error: "Server Busy ya Link Expired!" });
+        res.json({ status: false, error: "Server busy! Try again." });
     }
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log(`RDX Universal API on ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 RDX API Live on port ${PORT}`));
