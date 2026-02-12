@@ -1,14 +1,4 @@
-{
-  "name": "rdx-ultra-lite",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "axios": "^1.6.0",
-    "cheerio": "^1.0.0-rc.12",
-    "qs": "^6.11.2"
-  }
-}
+Flask
+requests
+gunicorn
+yt-dlp@git+https://github.com/yt-dlp/yt-dlp.git@master
