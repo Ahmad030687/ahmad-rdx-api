@@ -8,26 +8,30 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "🦅 AHMAD RDX - LIVE"
+    return "🦅 AHMAD RDX - LIVE (Cookies Enabled)"
 
 @app.route('/ahmad-dl')
 def get_info():
     url = request.args.get('url')
     if not url: return jsonify({"status": False, "msg": "Link missing"})
     
+    # --- YAHAN CHANGE KIYA HAI ---
     ydl_opts = {
         'format': 'best',
         'quiet': True,
         'no_warnings': True,
-        'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15'
+        # Cookies file ka path (Make sure ye file upload ho)
+        'cookiefile': 'cookies.txt', 
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     }
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Facebook ke liye auth check
             info = ydl.extract_info(url, download=False)
             real_url = info.get('url')
             
-            # Base64 Encode (Link ko tootne se bachane ke liye)
+            # Base64 Encode
             token = base64.b64encode(real_url.encode('ascii')).decode('ascii')
             
             return jsonify({
@@ -37,6 +41,8 @@ def get_info():
             })
 
     except Exception as e:
+        # Error ko print bhi karwaen taake logs mein dikhe
+        print(f"Error: {str(e)}")
         return jsonify({"status": False, "error": str(e)})
 
 @app.route('/proxy-dl')
@@ -45,12 +51,12 @@ def proxy_dl():
     if not token: return Response("No token", status=400)
 
     try:
-        # Link ko wapis asli halat mein lana
         target_url = base64.b64decode(token.encode('ascii')).decode('ascii')
         
+        # Headers update kiye hain taake Facebook block na kare
         headers = {
-            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15",
-            "Referer": "https://www.tiktok.com/"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Referer": "https://www.facebook.com/"
         }
 
         def generate():
