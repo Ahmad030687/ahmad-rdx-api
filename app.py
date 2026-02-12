@@ -9,21 +9,21 @@ import time
 app = Flask(__name__)
 
 # ==========================================
-# 🍪 PASTE YOUR JSON COOKIES HERE
+# 🍪 CORRECTED JSON COOKIES FOR PYTHON
 # ==========================================
 RAW_JSON_COOKIES = [
-    {"domain":".facebook.com","expirationDate":1804001781.765706,"hostOnly":false,"httpOnly":true,"name":"sb","path":"/","sameSite":"no_restriction","secure":true,"session":false,"storeId":"0","value":"lbsxaQTS295Ois2srigFcejO"},
-    {"domain":".facebook.com","expirationDate":1803715172.056745,"hostOnly":false,"httpOnly":true,"name":"ps_l","path":"/","sameSite":"lax","secure":true,"session":false,"storeId":"0","value":"1"},
-    {"domain":".facebook.com","expirationDate":1803715172.056848,"hostOnly":false,"httpOnly":true,"name":"ps_n","path":"/","sameSite":"no_restriction","secure":true,"session":false,"storeId":"0","value":"1"},
-    {"domain":".facebook.com","expirationDate":1800977781.765431,"hostOnly":false,"httpOnly":false,"name":"c_user","path":"/","sameSite":"no_restriction","secure":true,"session":false,"storeId":"0","value":"61578529016791"},
-    {"domain":".facebook.com","expirationDate":1800977781.765839,"hostOnly":false,"httpOnly":true,"name":"xs","path":"/","sameSite":"no_restriction","secure":true,"session":false,"storeId":"0","value":"29%3A5VqxRoDctGchbg%3A2%3A1769441778%3A-1%3A-1"},
-    {"domain":".facebook.com","expirationDate":1805498347.876131,"hostOnly":false,"httpOnly":true,"name":"datr","path":"/","sameSite":"no_restriction","secure":true,"session":false,"storeId":"0","value":"T-V4aTWiymScbJLTq-l3p7H8"},
-    {"domain":".facebook.com","expirationDate":1805498346.29123,"hostOnly":false,"httpOnly":true,"name":"pas","path":"/","sameSite":"lax","secure":true,"session":false,"storeId":"0","value":"61559731610845%3ApoLA8U6xwi%2C61564574314688%3AtTafsRuf0A%2C61578529016791%3AQOZE8DZRv1"},
-    {"domain":".facebook.com","expirationDate":1776122347,"hostOnly":false,"httpOnly":false,"name":"vpd","path":"/","sameSite":"lax","secure":true,"session":false,"storeId":"0","value":"v1%3B708x360x3"},
-    {"domain":".facebook.com","expirationDate":1771515651.662064,"hostOnly":false,"httpOnly":false,"name":"locale","path":"/","sameSite":"no_restriction","secure":true,"session":false,"storeId":"0","value":"en_US"},
-    {"domain":".facebook.com","expirationDate":1778714346.291127,"hostOnly":false,"httpOnly":true,"name":"fr","path":"/","sameSite":"no_restriction","secure":true,"session":false,"storeId":"0","value":"0NmFFZJMeRIr9Kx2t.AWeyogoZa2Mrp3RHAjRvmC5ehaITiNZebjFVEEOkRXNpTmPFcNQ.BpMbuV..AAA.0.0.Bpjl_q.AWdxORasg8oQOJTznvQJQoMDUIQ"},
-    {"domain":".facebook.com","expirationDate":1802474347,"hostOnly":false,"httpOnly":false,"name":"fbl_st","path":"/","sameSite":"strict","secure":true,"session":false,"storeId":"0","value":"100734125%3BT%3A29515639"},
-    {"domain":".facebook.com","expirationDate":1778714347,"hostOnly":false,"httpOnly":false,"name":"wl_cbv","path":"/","sameSite":"no_restriction","secure":true,"session":false,"storeId":"0","value":"v2%3Bclient_version%3A3084%3Btimestamp%3A1770938346"}
+    {"domain": ".facebook.com", "expirationDate": 1804001781.765706, "hostOnly": False, "httpOnly": True, "name": "sb", "path": "/", "sameSite": "no_restriction", "secure": True, "session": False, "storeId": "0", "value": "lbsxaQTS295Ois2srigFcejO"},
+    {"domain": ".facebook.com", "expirationDate": 1803715172.056745, "hostOnly": False, "httpOnly": True, "name": "ps_l", "path": "/", "sameSite": "lax", "secure": True, "session": False, "storeId": "0", "value": "1"},
+    {"domain": ".facebook.com", "expirationDate": 1803715172.056848, "hostOnly": False, "httpOnly": True, "name": "ps_n", "path": "/", "sameSite": "no_restriction", "secure": True, "session": False, "storeId": "0", "value": "1"},
+    {"domain": ".facebook.com", "expirationDate": 1800977781.765431, "hostOnly": False, "httpOnly": False, "name": "c_user", "path": "/", "sameSite": "no_restriction", "secure": True, "session": False, "storeId": "0", "value": "61578529016791"},
+    {"domain": ".facebook.com", "expirationDate": 1800977781.765839, "hostOnly": False, "httpOnly": True, "name": "xs", "path": "/", "sameSite": "no_restriction", "secure": True, "session": False, "storeId": "0", "value": "29%3A5VqxRoDctGchbg%3A2%3A1769441778%3A-1%3A-1"},
+    {"domain": ".facebook.com", "expirationDate": 1805498347.876131, "hostOnly": False, "httpOnly": True, "name": "datr", "path": "/", "sameSite": "no_restriction", "secure": True, "session": False, "storeId": "0", "value": "T-V4aTWiymScbJLTq-l3p7H8"},
+    {"domain": ".facebook.com", "expirationDate": 1805498346.29123, "hostOnly": False, "httpOnly": True, "name": "pas", "path": "/", "sameSite": "lax", "secure": True, "session": False, "storeId": "0", "value": "61559731610845%3ApoLA8U6xwi%2C61564574314688%3AtTafsRuf0A%2C61578529016791%3AQOZE8DZRv1"},
+    {"domain": ".facebook.com", "expirationDate": 1776122347, "hostOnly": False, "httpOnly": False, "name": "vpd", "path": "/", "sameSite": "lax", "secure": True, "session": False, "storeId": "0", "value": "v1%3B708x360x3"},
+    {"domain": ".facebook.com", "expirationDate": 1771515651.662064, "hostOnly": False, "httpOnly": False, "name": "locale", "path": "/", "sameSite": "no_restriction", "secure": True, "session": False, "storeId": "0", "value": "en_US"},
+    {"domain": ".facebook.com", "expirationDate": 1778714346.291127, "hostOnly": False, "httpOnly": True, "name": "fr", "path": "/", "sameSite": "no_restriction", "secure": True, "session": False, "storeId": "0", "value": "0NmFFZJMeRIr9Kx2t.AWeyogoZa2Mrp3RHAjRvmC5ehaITiNZebjFVEEOkRXNpTmPFcNQ.BpMbuV..AAA.0.0.Bpjl_q.AWdxORasg8oQOJTznvQJQoMDUIQ"},
+    {"domain": ".facebook.com", "expirationDate": 1802474347, "hostOnly": False, "httpOnly": False, "name": "fbl_st", "path": "/", "sameSite": "strict", "secure": True, "session": False, "storeId": "0", "value": "100734125%3BT%3A29515639"},
+    {"domain": ".facebook.com", "expirationDate": 1778714347, "hostOnly": False, "httpOnly": False, "name": "wl_cbv", "path": "/", "sameSite": "no_restriction", "secure": True, "session": False, "storeId": "0", "value": "v2%3Bclient_version%3A3084%3Btimestamp%3A1770938346"}
 ]
 # ==========================================
 
