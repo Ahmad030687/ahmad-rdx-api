@@ -1,4 +1,4 @@
-Flask
+fastapi
+uvicorn
+yt-dlp
 requests
-gunicorn
-yt-dlp@git+https://github.com/yt-dlp/yt-dlp.git@master
