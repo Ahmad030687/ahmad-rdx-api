@@ -3,8 +3,6 @@ from flask_cors import CORS
 import yt_dlp
 import random
 import time
-import json
-import os
 
 app = Flask(__name__)
 CORS(app)
@@ -12,10 +10,7 @@ CORS(app)
 API_KEY = "AhmadRDX"
 CREATOR = "AHMAD RDX"
 
-COOKIE_JSON = "cookie.json"
-COOKIE_FILE = "cookies.txt"
-
-# 🔥 Huge Proxy Pool
+# 🔥 Huge Proxy Pool (production)
 PROXIES = [
 "http://103.152.112.145:80",
 "http://103.152.112.162:80",
@@ -34,51 +29,19 @@ PROXIES = [
 ]
 
 
-# 🔥 Cookie Loader (Old style support)
-def load_cookies():
-    try:
-        if not os.path.exists(COOKIE_JSON):
-            return False
-
-        with open(COOKIE_JSON, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        cookies = data.get("cookies", [])
-        if not cookies:
-            return False
-
-        lines = ["# Netscape HTTP Cookie File\n"]
-        for c in cookies:
-            domain = c.get("domain", "")
-            include = "TRUE" if domain.startswith(".") else "FALSE"
-            path = c.get("path", "/")
-            secure = "TRUE" if c.get("secure", False) else "FALSE"
-            expiry = str(int(c.get("expirationDate", 0)))
-            name = c.get("name", "")
-            value = c.get("value", "")
-            lines.append(f"{domain}\t{include}\t{path}\t{secure}\t{expiry}\t{name}\t{value}")
-
-        with open(COOKIE_FILE, "w", encoding="utf-8") as f:
-            f.write("\n".join(lines))
-
-        return True
-    except:
-        return False
-
-
-# 🔥 Multi Extractor (Strong Production)
+# 🔥 Multi Extractor (Strong)
 def get_video_info(url):
     options = {
         "format": "best",
         "quiet": True,
         "no_warnings": True,
-        "cookiefile": COOKIE_FILE if os.path.exists(COOKIE_FILE) else None,
         "http_headers": {
             "User-Agent": "Mozilla/5.0"
         }
     }
 
-    for attempt in range(3):  # retries
+    # Try multiple times (high success)
+    for attempt in range(3):
         try:
             with yt_dlp.YoutubeDL(options) as ydl:
                 info = ydl.extract_info(url, download=False)
@@ -110,8 +73,6 @@ def downloader():
     if not url:
         return jsonify({"status": False, "msg": "URL missing"}), 400
 
-    load_cookies()
-
     return jsonify(get_video_info(url))
 
 
@@ -124,5 +85,4 @@ def home():
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
