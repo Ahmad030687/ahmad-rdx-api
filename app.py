@@ -1,112 +1,76 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import yt_dlp
-import time
 import os
-import json
 
 app = Flask(__name__)
 CORS(app)
 
-API_KEY = "AhmadRDX"
+# 🦅 RDX CONFIG
+API_KEY = "AhmadRDX" # Aapka Secret API Key
 CREATOR = "AHMAD RDX"
 
-COOKIE_JSON = "cookie.json"
-COOKIE_FILE = "cookies.txt"
-
-# Proxy (optional)
-PROXIES = [
-"http://103.152.112.145:80",
-"http://103.152.112.162:80",
-"http://103.152.112.195:80",
-"http://51.15.242.202:8888",
-"http://51.75.206.209:80",
-"http://195.154.43.28:3128"
-]
-
-
-def load_cookies():
-    try:
-        if not os.path.exists(COOKIE_JSON):
-            return False
-
-        with open(COOKIE_JSON, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        cookies = data.get("cookies", [])
-        if not cookies:
-            return False
-
-        lines = ["# Netscape HTTP Cookie File\n"]
-        for c in cookies:
-            domain = c.get("domain", "")
-            include = "TRUE" if domain.startswith(".") else "FALSE"
-            path = c.get("path", "/")
-            secure = "TRUE" if c.get("secure", False) else "FALSE"
-            expiry = str(int(c.get("expirationDate", 0)))
-            name = c.get("name", "")
-            value = c.get("value", "")
-            lines.append(f"{domain}\t{include}\t{path}\t{secure}\t{expiry}\t{name}\t{value}")
-
-        with open(COOKIE_FILE, "w", encoding="utf-8") as f:
-            f.write("\n".join(lines))
-
-        return True
-    except:
-        return False
-
-
 def get_video_info(url):
-    options = {
-        "format": "best",
-        "quiet": True,
-        "no_warnings": True,
-        "cookiefile": COOKIE_FILE if os.path.exists(COOKIE_FILE) else None,
-        "http_headers": {"User-Agent": "Mozilla/5.0"}
+    ydl_opts = {
+        'format': 'best',
+        'quiet': True,
+        'no_warnings': True,
+        'cachedir': False,
     }
-
-    for _ in range(3):
+    
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            with yt_dlp.YoutubeDL(options) as ydl:
-                info = ydl.extract_info(url, download=False)
-
-                return {
-                    "status": True,
-                    "result": {
-                        "video": info.get("url"),
-                        "title": info.get("title")
+            info = ydl.extract_info(url, download=False)
+            
+            # Format the response like Koja API
+            return {
+                "status": True,
+                "statusCode": 200,
+                "creator": CREATOR,
+                "input": url,
+                "result": {
+                    "extractor": info.get('extractor_key', 'universal'),
+                    "title": info.get('title', 'RDX Video'),
+                    "thumbnail": info.get('thumbnail', ''),
+                    "duration": info.get('duration_string', '00:00'),
+                    "links": {
+                        "video": [
+                            {
+                                "resolution": info.get('resolution', 'HD'),
+                                "ext": info.get('ext', 'mp4'),
+                                "url": info.get('url', '')
+                            }
+                        ]
                     }
                 }
-        except:
-            time.sleep(2)
-            continue
+            }
+        except Exception as e:
+            return {"status": False, "error": str(e)}
 
-    return {"status": False, "error": "Extraction failed"}
-
+@app.route('/')
+def home():
+    return jsonify({
+        "message": "🦅 AHMAD RDX Universal API is Running!",
+        "usage": "/downloader/aiodl?apikey=AhmadRDX&url=LINK"
+    })
 
 @app.route('/downloader/aiodl', methods=['GET'])
 def downloader():
     url = request.args.get('url')
     apikey = request.args.get('apikey')
 
+    # 🛡️ Security Check
     if apikey != API_KEY:
-        return jsonify({"status": False, "msg": "Invalid API Key"}), 403
+        return jsonify({"status": False, "msg": "Invalid API Key! Ahmad bhai se permission lo."}), 403
 
     if not url:
-        return jsonify({"status": False, "msg": "URL missing"}), 400
+        return jsonify({"status": False, "msg": "URL kahan hai Ahmad bhai?"}), 400
 
-    load_cookies()
-
-    return jsonify(get_video_info(url))
-
-
-@app.route('/')
-def home():
-    return jsonify({
-        "message": "Downloader API Running",
-        "usage": "/downloader/aiodl?apikey=AhmadRDX&url=LINK"
-    })
-
+    result = get_video_info(url)
+    return jsonify(result)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    # Render/Vercel ke liye port setup
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
+    
