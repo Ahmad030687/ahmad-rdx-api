@@ -15,7 +15,7 @@ CREATOR = "AHMAD RDX"
 COOKIE_JSON = "cookie.json"
 COOKIE_FILE = "cookies.txt"
 
-# 🔥 Huge Proxy Pool (Rotate Every Request)
+# 🔥 Huge Proxy Pool (Rotate)
 PROXIES = [
 "http://103.152.112.145:80",
 "http://103.152.112.162:80",
@@ -40,7 +40,7 @@ PROXIES = [
 ]
 
 
-# 🔥 JSON → Netscape Converter (Exported Cookie Support)
+# 🔥 JSON → Netscape Converter
 def convert_json_to_netscape(json_cookies):
     lines = [
         "# Netscape HTTP Cookie File",
@@ -62,7 +62,7 @@ def convert_json_to_netscape(json_cookies):
     return "\n".join(lines)
 
 
-# 🔥 Load Cookies (From cookie.json)
+# 🔥 Load Cookies (if cookie.json exists)
 def load_cookies():
     try:
         if not os.path.exists(COOKIE_JSON):
@@ -85,7 +85,7 @@ def load_cookies():
         return False
 
 
-# 🔥 Smart Proxy Selector
+# 🔥 Proxy Selector
 def get_proxy():
     return {
         "http": random.choice(PROXIES),
@@ -93,49 +93,66 @@ def get_proxy():
     }
 
 
-# 🔥 Video Extraction (Best Effort)
-def get_video_info(url):
+# 🔥 Multi Extractor (Best Effort)
+def extract_with_yt_dlp(url):
     ydl_opts = {
-        'format': 'best',
-        'quiet': True,
-        'no_warnings': True,
-        'cachedir': False,
-        'cookiefile': COOKIE_FILE if os.path.exists(COOKIE_FILE) else None,
-        'http_headers': {
-            'User-Agent': 'Mozilla/5.0'
-        },
-        'proxy': random.choice(PROXIES)
+        "format": "best",
+        "quiet": True,
+        "no_warnings": True,
+        "cachedir": False,
+        "cookiefile": COOKIE_FILE if os.path.exists(COOKIE_FILE) else None,
+        "http_headers": {"User-Agent": "Mozilla/5.0"},
+        "proxy": random.choice(PROXIES)
     }
 
-    for attempt in range(4):  # 4 retries
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=False)
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            return info.get("url")
+    except Exception:
+        return None
 
+
+# 🔥 Fallback Extractor (Second Attempt)
+def extract_with_fallback(url):
+    try:
+        options = {
+            "format": "best",
+            "quiet": True,
+            "no_warnings": True,
+            "extract_flat": False
+        }
+        with yt_dlp.YoutubeDL(options) as ydl:
+            info = ydl.extract_info(url, download=False)
+            return info.get("url")
+    except Exception:
+        return None
+
+
+# 🔥 Final Extraction (Multi Layer)
+def get_video_info(url):
+    for attempt in range(3):  # 3 retries
+        try:
+            # Try main extractor
+            video_url = extract_with_yt_dlp(url)
+
+            # If fail, try fallback
+            if not video_url:
+                video_url = extract_with_fallback(url)
+
+            if video_url:
                 return {
                     "status": True,
                     "statusCode": 200,
                     "creator": CREATOR,
                     "input": url,
                     "result": {
-                        "extractor": info.get('extractor_key', 'universal'),
-                        "title": info.get('title', 'RDX Video'),
-                        "thumbnail": info.get('thumbnail', ''),
-                        "duration": info.get('duration_string', '00:00'),
-                        "links": {
-                            "video": [
-                                {
-                                    "resolution": info.get('resolution', 'HD'),
-                                    "ext": info.get('ext', 'mp4'),
-                                    "url": info.get('url', '')
-                                }
-                            ]
-                        }
+                        "video": video_url
                     }
                 }
 
         except Exception:
-            time.sleep(2)  # small delay
+            time.sleep(2)
             continue
 
     return {"status": False, "error": "Extraction failed"}
@@ -144,9 +161,8 @@ def get_video_info(url):
 @app.route('/')
 def home():
     return jsonify({
-        "message": "🦅 RDX Downloader API Running",
-        "usage": "/downloader/aiodl?apikey=AhmadRDX&url=LINK",
-        "cookie_mode": "Use exported cookie.json"
+        "message": "🦅 Multi Extractor API Running",
+        "usage": "/downloader/aiodl?apikey=AhmadRDX&url=LINK"
     })
 
 
