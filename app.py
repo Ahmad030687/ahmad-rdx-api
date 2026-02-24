@@ -1,10 +1,10 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import yt_dlp
-import os
-import json
 import random
 import time
+import os
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -15,7 +15,7 @@ CREATOR = "AHMAD RDX"
 COOKIE_JSON = "cookie.json"
 COOKIE_FILE = "cookies.txt"
 
-# 🔥 Huge Proxy Pool (Rotate)
+# 🔥 Large Proxy Pool (rotate)
 PROXIES = [
 "http://103.152.112.145:80",
 "http://103.152.112.162:80",
@@ -30,39 +30,11 @@ PROXIES = [
 "http://188.166.56.246:80",
 "http://178.62.193.19:8080",
 "http://159.65.69.186:9300",
-"http://167.172.238.6:10004",
-"http://142.93.223.221:80",
-"http://134.209.29.120:3128",
-"http://68.183.143.134:80",
-"http://45.77.248.114:80",
-"http://45.76.177.29:8080",
-"http://165.22.254.253:80"
+"http://167.172.238.6:10004"
 ]
 
 
-# 🔥 JSON → Netscape Converter
-def convert_json_to_netscape(json_cookies):
-    lines = [
-        "# Netscape HTTP Cookie File",
-        "# This file was generated automatically\n"
-    ]
-
-    for cookie in json_cookies:
-        domain = cookie.get("domain", "")
-        include_sub = "TRUE" if domain.startswith(".") else "FALSE"
-        path = cookie.get("path", "/")
-        secure = "TRUE" if cookie.get("secure", False) else "FALSE"
-        expiry = str(int(cookie.get("expirationDate", 0)))
-        name = cookie.get("name", "")
-        value = cookie.get("value", "")
-
-        line = f"{domain}\t{include_sub}\t{path}\t{secure}\t{expiry}\t{name}\t{value}"
-        lines.append(line)
-
-    return "\n".join(lines)
-
-
-# 🔥 Load Cookies (if cookie.json exists)
+# 🔥 Load Cookies (optional)
 def load_cookies():
     try:
         if not os.path.exists(COOKIE_JSON):
@@ -75,27 +47,28 @@ def load_cookies():
         if not cookies:
             return False
 
-        netscape = convert_json_to_netscape(cookies)
+        lines = ["# Netscape HTTP Cookie File\n"]
+        for c in cookies:
+            domain = c.get("domain", "")
+            include = "TRUE" if domain.startswith(".") else "FALSE"
+            path = c.get("path", "/")
+            secure = "TRUE" if c.get("secure", False) else "FALSE"
+            expiry = str(int(c.get("expirationDate", 0)))
+            name = c.get("name", "")
+            value = c.get("value", "")
+            lines.append(f"{domain}\t{include}\t{path}\t{secure}\t{expiry}\t{name}\t{value}")
+
         with open(COOKIE_FILE, "w", encoding="utf-8") as f:
-            f.write(netscape)
+            f.write("\n".join(lines))
 
         return True
-    except Exception as e:
-        print("Cookie Load Error:", e)
+    except:
         return False
 
 
-# 🔥 Proxy Selector
-def get_proxy():
-    return {
-        "http": random.choice(PROXIES),
-        "https": random.choice(PROXIES)
-    }
-
-
 # 🔥 Multi Extractor (Best Effort)
-def extract_with_yt_dlp(url):
-    ydl_opts = {
+def extract_video(url):
+    options = {
         "format": "best",
         "quiet": True,
         "no_warnings": True,
@@ -105,65 +78,35 @@ def extract_with_yt_dlp(url):
         "proxy": random.choice(PROXIES)
     }
 
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            return info.get("url")
-    except Exception:
-        return None
-
-
-# 🔥 Fallback Extractor (Second Attempt)
-def extract_with_fallback(url):
-    try:
-        options = {
-            "format": "best",
-            "quiet": True,
-            "no_warnings": True,
-            "extract_flat": False
-        }
-        with yt_dlp.YoutubeDL(options) as ydl:
-            info = ydl.extract_info(url, download=False)
-            return info.get("url")
-    except Exception:
-        return None
-
-
-# 🔥 Final Extraction (Multi Layer)
-def get_video_info(url):
-    for attempt in range(3):  # 3 retries
+    for attempt in range(3):
         try:
-            # Try main extractor
-            video_url = extract_with_yt_dlp(url)
-
-            # If fail, try fallback
-            if not video_url:
-                video_url = extract_with_fallback(url)
-
-            if video_url:
-                return {
-                    "status": True,
-                    "statusCode": 200,
-                    "creator": CREATOR,
-                    "input": url,
-                    "result": {
-                        "video": video_url
-                    }
-                }
-
-        except Exception:
+            with yt_dlp.YoutubeDL(options) as ydl:
+                info = ydl.extract_info(url, download=False)
+                return info.get("url")
+        except:
             time.sleep(2)
             continue
 
-    return {"status": False, "error": "Extraction failed"}
+    return None
 
 
-@app.route('/')
-def home():
-    return jsonify({
-        "message": "🦅 Multi Extractor API Running",
-        "usage": "/downloader/aiodl?apikey=AhmadRDX&url=LINK"
-    })
+# 🔥 Final Video Info
+def get_video_info(url):
+    video = extract_video(url)
+
+    if video:
+        return {
+            "status": True,
+            "creator": CREATOR,
+            "result": {
+                "video": video
+            }
+        }
+
+    return {
+        "status": False,
+        "error": "Extraction failed or content unavailable"
+    }
 
 
 @app.route('/downloader/aiodl', methods=['GET'])
@@ -179,8 +122,7 @@ def downloader():
 
     load_cookies()
 
-    result = get_video_info(url)
-    return jsonify(result)
+    return jsonify(get_video_info(url))
 
 
 if __name__ == '__main__':
