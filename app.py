@@ -3,8 +3,8 @@ from flask_cors import CORS
 import yt_dlp
 import random
 import time
-import os
 import json
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -15,7 +15,7 @@ CREATOR = "AHMAD RDX"
 COOKIE_JSON = "cookie.json"
 COOKIE_FILE = "cookies.txt"
 
-# 🔥 Large Proxy Pool (rotate)
+# 🔥 Huge Proxy Pool
 PROXIES = [
 "http://103.152.112.145:80",
 "http://103.152.112.162:80",
@@ -34,7 +34,7 @@ PROXIES = [
 ]
 
 
-# 🔥 Load Cookies (optional)
+# 🔥 Cookie Loader (Old style support)
 def load_cookies():
     try:
         if not os.path.exists(COOKIE_JSON):
@@ -66,47 +66,37 @@ def load_cookies():
         return False
 
 
-# 🔥 Multi Extractor (Best Effort)
-def extract_video(url):
+# 🔥 Multi Extractor (Strong Production)
+def get_video_info(url):
     options = {
         "format": "best",
         "quiet": True,
         "no_warnings": True,
-        "cachedir": False,
         "cookiefile": COOKIE_FILE if os.path.exists(COOKIE_FILE) else None,
-        "http_headers": {"User-Agent": "Mozilla/5.0"},
-        "proxy": random.choice(PROXIES)
+        "http_headers": {
+            "User-Agent": "Mozilla/5.0"
+        }
     }
 
-    for attempt in range(3):
+    for attempt in range(3):  # retries
         try:
             with yt_dlp.YoutubeDL(options) as ydl:
                 info = ydl.extract_info(url, download=False)
-                return info.get("url")
-        except:
+
+                return {
+                    "status": True,
+                    "creator": CREATOR,
+                    "result": {
+                        "video": info.get("url"),
+                        "title": info.get("title")
+                    }
+                }
+
+        except Exception:
             time.sleep(2)
             continue
 
-    return None
-
-
-# 🔥 Final Video Info
-def get_video_info(url):
-    video = extract_video(url)
-
-    if video:
-        return {
-            "status": True,
-            "creator": CREATOR,
-            "result": {
-                "video": video
-            }
-        }
-
-    return {
-        "status": False,
-        "error": "Extraction failed or content unavailable"
-    }
+    return {"status": False, "error": "Extraction failed"}
 
 
 @app.route('/downloader/aiodl', methods=['GET'])
@@ -123,6 +113,14 @@ def downloader():
     load_cookies()
 
     return jsonify(get_video_info(url))
+
+
+@app.route('/')
+def home():
+    return jsonify({
+        "message": "Multi Downloader API Running",
+        "usage": "/downloader/aiodl?apikey=AhmadRDX&url=LINK"
+    })
 
 
 if __name__ == '__main__':
