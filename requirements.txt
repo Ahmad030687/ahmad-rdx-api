@@ -1,5 +1,5 @@
-fastapi
+generativeai
 gunicorn
-yt-dlp
+flask_cors
 requests
 flask-cors
